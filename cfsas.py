@@ -9,7 +9,7 @@ import math
 #   cfset - post equal leading hash - <cfset[^=\r\n]*=\s?#
 #   cfset - hash in a quote-free cfset - match # in <cfset[^>\"\r\n]*>
 #   cfset - functions that directly manipulate variables w/o need for return - <cfset[^=\r\n]*=[\s]* +function_name
-# 
+#   cfset - modifying application,session or server scope variables should be inside an exclusive lock - <cfset[\s]*(application|session|server)\.[^=\r\n ]+[\s]*=
 # 
 
 class cfsasCommand(sublime_plugin.TextCommand):
@@ -68,26 +68,19 @@ class cfsasCommand(sublime_plugin.TextCommand):
 		returnMessage += " -CFML: Tag vs Script usage\n   %.2f" % (c*100/float(c+d)) +"% tags\n   "+"%.2f" % (d*100/float(c+d)) +"% script\n"
 
 		#cfset validation
-		cfset_001 = self.view.find_all("<cfset[\s]*#")
-		cfset_002 = self.view.find_all("<cfset[^=\r\n]*=\s?#")
-		cfset_003 = self.view.find_all("<cfset[^>\"\r\n]*>")
-
-		self.view.add_regions("cfset_001",cfset_001,"source", sublime.HIDDEN)
-		self.view.add_regions("cfset_002",cfset_002,"source", sublime.HIDDEN)
-		self.view.add_regions("cfset_003",cfset_003,"source", sublime.HIDDEN)
 				
 		returnMessage += "\n\n Possible Coding Standards Violations: \n =========================================================================================================\n"
-		h = self.view.get_regions("cfset_001")
+		h = self.view.find_all("<cfset[\s]*#")
 		for region in h:
 			(row, col) = self.view.rowcol(region.begin())
 			m = " -Line: "+str(row+1)+ " - Issue: Hashes are not necessary unless variable/method resides between quotes - "+self.view.substr(self.view.line(region))+"\n"
 			returnMessage += m
-		h = self.view.get_regions("cfset_002")
+		h = self.view.find_all("<cfset[^=\r\n]*=\s?#")
 		for region in h:
 			(row, col) = self.view.rowcol(region.begin())
 			m = " -Line: "+str(row+1)+ " - Issue: Hashes are not necessary unless variable/method resides between quotes - "+self.view.substr(self.view.line(region))+"\n"
 			returnMessage += m
-		h = self.view.get_regions("cfset_003")
+		h = self.view.find_all("<cfset[^>\"\r\n]*>")
 		for region in h:
 			a = self.view.substr(region).find("#")
 			if a != -1:
@@ -103,6 +96,11 @@ class cfsasCommand(sublime_plugin.TextCommand):
 				m = " -Line: "+str(row+1)+ " - Issue: A dummy variable is not necessary to perform the "+function+"() function unless the boolean return is useful further in the code - "+self.view.substr(self.view.line(region))+"\n"
 				returnMessage += m
 
+		h = self.view.find_all("<cfset[\s]*(application|session|server)\.[^=\r\n ]+[\s]*=")
+		for region in h:
+			(row, col) = self.view.rowcol(region.begin())
+			m = " -Line: "+str(row+1)+" - Issue: Shared memory variables should be modified inside an EXCLUSIVE CFLOCK of the same SCOPE. This ensures the integrity of shared data. - "+self.view.substr(self.view.line(region))+"\n"
+			returnMessage += m
 
 		#send to new file
 		w = self.view.window()
