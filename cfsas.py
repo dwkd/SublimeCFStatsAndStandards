@@ -8,7 +8,7 @@ import math
 #   cfset - leading hash - <cfset[\s]*#
 #   cfset - post equal leading hash - <cfset[^=\r\n]*=\s?#
 #   cfset - hash in a quote-free cfset - match # in <cfset[^>\"\r\n]*>
-# 
+#   cfset - functions that directly manipulate variables w/o need for return - <cfset[^=\r\n]*=[\s]* +function_name
 # 
 # 
 
@@ -94,6 +94,15 @@ class cfsasCommand(sublime_plugin.TextCommand):
 				(row, col) = self.view.rowcol(region.begin())
 				m = " -Line: "+str(row+1)+ " - Issue: Hashes are not necessary unless variable/method resides between quotes - "+self.view.substr(self.view.line(region))+"\n"
 				returnMessage += m
+
+		f = ["ArrayAppend","ArrayClear","ArrayDeleteAt","ArrayInsertAt","ArrayDelete","ArrayPrepend","ArrayResize","ArraySet","ArraySort","ArraySwap","CachePut","CacheRemove","CacheSetProperties","QuerySetCell","StructAppend","StructClear","StructDelete","StructInsert","StructUpdate"]
+		for function in f:
+			h = self.view.find_all("<cfset[^=\r\n]*=[\s]*"+function,sublime.IGNORECASE)
+			for region in h:
+				(row, col) = self.view.rowcol(region.begin())
+				m = " -Line: "+str(row+1)+ " - Issue: A dummy variable is not necessary to perform the "+function+"() function unless the boolean return is useful further in the code - "+self.view.substr(self.view.line(region))+"\n"
+				returnMessage += m
+
 
 		#send to new file
 		w = self.view.window()
