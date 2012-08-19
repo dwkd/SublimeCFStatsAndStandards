@@ -5,7 +5,8 @@ Work in progress
 
 How-to
 ======
-CTRL+ALT+S (Windows & Linux)
+Open file to be inspected and press:<br>
+CTRL+ALT+S (Windows & Linux)<br>
 COMMAND+ALT+S (Mac OS)
 
 License
