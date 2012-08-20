@@ -1,12 +1,32 @@
 SublimeCFStatsAndStandards
 ==========================
 The idea is to get a few useful stats about a cfm/cfc file and warn user of possible bad code practices.
-Work in progress
+
+<b>Results contains the following stats:</b><br />
+<ul>
+	<li>filename</li>
+	<li>filesize</li>
+	<li>comment size in kb and %</li>
+	<li>cfml tag vs script usage in %</li>
+	<li>number of cfdumps and writeDumps and at what line numbers</li>
+</ul>
+
+<b>Standards searched for:</b><br />
+<ul>
+	<li>cfset unnecessary hash signs outside quotes</li>
+	<li>cfset unnecessary dummy variables used to perform operations that directly affect the data such as having &gt;cfset tempvar = ArrayAppend(myarray,"myvalue")&lt; unless the boolean return is useful</li>
+	<li>cfset modifying application, server or session shared variables outside of an exclusive cflock</li>
+	<li>proper indentation</li>
+</ul>
+
+Work in progress. <br />
+More standards to come. <br />
+If you'd like to see another stat or standard, shoot me an email at webmaster@thebluepipe.com<br />
 
 How-to
 ======
-Open file to be inspected and press:<br>
-CTRL+ALT+S (Windows & Linux)<br>
+Open file to be inspected and press:<br />
+CTRL+ALT+S (Windows & Linux)<br />
 COMMAND+ALT+S (Mac OS)
 
 License
