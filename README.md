@@ -14,7 +14,7 @@ The idea is to get a few useful stats about a cfm/cfc file and warn user of poss
 <b>Standards searched for:</b><br />
 <ul>
 	<li>cfset unnecessary hash signs outside quotes</li>
-	<li>cfset unnecessary dummy variables used to perform operations that directly affect the data such as having &gt;cfset tempvar = ArrayAppend(myarray,"myvalue")&lt; unless the boolean return is useful</li>
+	<li>cfset unnecessary dummy variables used to perform operations that directly affect the data such as having &lt;cfset tempvar = ArrayAppend(myarray,"myvalue")&gt; unless the boolean return is useful</li>
 	<li>cfset modifying application, server or session shared variables outside of an exclusive cflock</li>
 	<li>proper indentation</li>
 </ul>
