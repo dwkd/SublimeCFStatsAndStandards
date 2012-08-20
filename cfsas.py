@@ -69,7 +69,7 @@ class cfsasCommand(sublime_plugin.TextCommand):
 		for region in h:
 			d += len(self.view.lines(region))
 		
-		if c>0 & d>0:
+		if c>0 or d>0:
 			returnMessage += "CFML: Tag vs Script usage\n\t%.2f" % (c*100/float(c+d)) +"% tags\n\t"+"%.2f" % (d*100/float(c+d)) +"% script\n"
 
 		#cfdumps and writeDumps
