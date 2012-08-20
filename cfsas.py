@@ -1,9 +1,11 @@
 import sublime, sublime_plugin
 import math
+import re
 
 # 
 #   cfscript - match only cfscript - <cfscript>[\s\S]*?<\/cfscript>
 #   cfml - match all cf tags except cfscript <\/?cf(?!script)[^>]*># 
+#	cfdump and writeDump - match all <cfdump[^>]*>   writeDump\([^\;]*\;
 # 
 #   cfset - leading hash - <cfset[\s]*#
 #   cfset - post equal leading hash - <cfset[^=\r\n]*=\s?#
@@ -11,6 +13,7 @@ import math
 #   cfset - functions that directly manipulate variables w/o need for return - <cfset[^=\r\n]*=[\s]* +function_name
 #   cfset - modifying application,session or server scope variables should be inside an exclusive lock - <cfset[\s]*(application|session|server)\.[^=\r\n ]+[\s]*=
 # 	indentation - find all tags that require new line after "[\t]*<"+TAG_NAME_GOES_HERE+"[^\r\n]*[\r\n][^\r\n]*" and then calculate tab counts of both
+#	
 #
 
 class cfsasCommand(sublime_plugin.TextCommand):
@@ -68,6 +71,22 @@ class cfsasCommand(sublime_plugin.TextCommand):
 		
 		returnMessage += "CFML: Tag vs Script usage\n\t%.2f" % (c*100/float(c+d)) +"% tags\n\t"+"%.2f" % (d*100/float(c+d)) +"% script\n"
 
+		#cfdumps and writeDumps
+		h = self.view.find_all("<cfdump[^>]*>", sublime.IGNORECASE) + self.view.find_all("writeDump\([^\;]*\;", sublime.IGNORECASE)
+		d = []
+		for region in h:
+			(row, col) = self.view.rowcol(region.begin())
+			d.append(row+1)
+		d.sort()
+
+		if len(d)>1:
+			m = str(len(d))+" cfdumps/writeDumps on lines "+str(d)
+		elif lend(d) == 1:
+			m = "1 cfdump/writeDumps at line "+str(d[0])
+		else:
+			m = "There are no cfdumps or writeDumps"
+		returnMessage += m
+		
 		#cfset validation				
 		returnMessage += "\n\nPossible Coding Standards Violations: \n=========================================================================================================\n"
 		h = self.view.find_all("<cfset[\s]*#", sublime.IGNORECASE)
@@ -96,7 +115,7 @@ class cfsasCommand(sublime_plugin.TextCommand):
 				m = "Line "+str(row+1)+ " - Issue: A dummy variable is not necessary to perform the "+function+"() function unless the boolean return is useful further in the code - "+self.view.substr(self.view.line(region))+"\n"
 				returnMessage += m
 
-		h = self.view.find_all("<cfset[\s]*(application|session|server)\.[^=\r\n ]+[\s]*=")
+		h = self.view.find_all("<cfset[\s]*(application|session|server)\.[^=\r\n ]+[\s]*=", sublime.IGNORECASE)
 		for region in h:
 			(row, col) = self.view.rowcol(region.begin())			
 			m = "Line "+str(row+1)+" - Issue: Shared memory variables should be modified inside an EXCLUSIVE CFLOCK of the same SCOPE. This ensures the integrity of shared data. - "+self.view.substr(self.view.line(region))+"\n"
