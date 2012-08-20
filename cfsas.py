@@ -21,7 +21,7 @@ class cfsasCommand(sublime_plugin.TextCommand):
 		#end output message
 		f = self.view
 		returnMessage = "\nCF Stats and Standards \n\nGeneral Stats:\n=========================================================================================================\n"
-		returnMessage += "File: "+str(f.file_name())+"\nSize: ~"+str(f.size()/1024)+"Kb ("+str(f.size())+" bytes)"
+		returnMessage += "File: "+str(f.file_name())+"\nSize: ~"+str(f.size()/1024)+"Kb ("+str(f.size())+" bytes)\n"
 		all = self.view.find_all("[\s\S]*")
 		self.view.add_regions("AllContent", all, "source", sublime.HIDDEN)
 		g = self.view.get_regions("AllContent")
