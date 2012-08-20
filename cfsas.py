@@ -5,7 +5,11 @@ import re
 # 
 #   cfscript - match only cfscript - <cfscript>[\s\S]*?<\/cfscript>
 #   cfml - match all cf tags except cfscript <\/?cf(?!script)[^>]*># 
-#	cfdump and writeDump - match all <cfdump[^>]*>   writeDump\([^\;]*\;
+#	 cfdump and writeDump - match all <cfdump[^>]*>   writeDump\([^\;]*\;
+#	 style <style[\s\S]*?<\/style> OR style="[^"]*" OR style='[^']*'
+#   in-file js = total script tags - src script tags => 
+#   		total script js blocks = <script[^\r\n]*?(">)[\s\S]*?<\/script> + <script>[\s\S]*?<\/script>
+#			src script js tags = <script[^>]*?src[^>]*?>(<\/script>)?
 # 
 #   cfset - leading hash - <cfset[\s]*#
 #   cfset - post equal leading hash - <cfset[^=\r\n]*=\s?#
@@ -31,7 +35,7 @@ class cfsasCommand(sublime_plugin.TextCommand):
 		#comments
 		cf_comment_01 = self.view.find_all("<\!---[\s\S]*?--->")
 		cf_comment_02 = self.view.find_all("\/\*[\s\S]*?\*\/")
-				
+
 		self.view.add_regions("cf_comment_01", cf_comment_01, "source", sublime.HIDDEN)
 		self.view.add_regions("cf_comment_02", cf_comment_02, "source", sublime.HIDDEN)
 
@@ -52,6 +56,54 @@ class cfsasCommand(sublime_plugin.TextCommand):
 			m = "Comment size is ~"+str(c)+" bytes out of a total file size of ~"+str(h/1024)+"Kb ("+str(c*100/h)+"%)\n"
 			returnMessage += m
 
+		#external js
+		returnMessage += "Javascript:\n"
+
+		h = self.view.find_all("<script[^>]*?src[^>]*?>(<\/script>)?", sublime.IGNORECASE)
+		if len(h) == 1:
+			m = "\t1 external javascript file loaded\n"
+		else:
+			m = "\t"+str(len(h))+" external javascript files loaded\n"
+		returnMessage += m			
+
+		#in-file js
+		h = self.view.find_all("<script[^\r\n]*?(\">)[\s\S]*?<\/script>", sublime.IGNORECASE) + self.view.find_all("<script>[\s\S]*?<\/script>", sublime.IGNORECASE)
+		c = 0
+		for region in h:
+			c += len(self.view.substr(region))
+		if c < 1024:
+			m = "\tIn-file javascript: "+str(c)+" bytes\n"
+		else:
+			m = "\tIn-file javascript: ~"+str(round(float(c)/1024))+"Kb ("+str(c)+" bytes)\n"
+		returnMessage +=m
+
+		returnMessage += "CSS:\n"
+
+		#in-file css
+		h = self.view.find_all("<style[\s\S]*?<\/style>", sublime.IGNORECASE)
+		c = 0
+		for region in h:
+			c += len(self.view.substr(region))
+		if c < 1024:
+			m = "\tIn-file css: "+str(c)+" bytes"
+		else:
+			m = "\tIn-file css: ~"+str(round(float(c)/1024))+"Kb ("+str(c)+" bytes)"
+		if c != 0:
+			m += " (All in-file css declarations should be moved to a .css file)"
+		m += "\n"
+		returnMessage +=m
+ 
+		#in-line css
+		h = self.view.find_all("style=\"[^\"]*\"", sublime.IGNORECASE) + self.view.find_all("style=\'[^\']*\'", sublime.IGNORECASE)
+		c = 0
+		for region in h:
+			c += len(self.view.substr(region))
+		if c < 1024:
+			m = "\tIn-line css: "+str(c)+" bytes\n"
+		else:
+			m = "\tIn-line css: ~"+str(round(float(c)/1024))+"Kb ("+str(c)+" bytes)\n"
+		returnMessage +=m
+
 		#cf code: tag vs script usage
 		cfcode_cftags = self.view.find_all("<\/?cf(?!script)[^>]*>", sublime.IGNORECASE)
 		cfcode_cfscript = self.view.find_all("<cfscript>[\s\S]*?<\/cfscript>", sublime.IGNORECASE)
@@ -70,7 +122,7 @@ class cfsasCommand(sublime_plugin.TextCommand):
 			d += len(self.view.lines(region))
 		
 		if c>0 or d>0:
-			returnMessage += "CFML: Tag vs Script usage\n\t%.2f" % (c*100/float(c+d)) +"% tags\n\t"+"%.2f" % (d*100/float(c+d)) +"% script\n"
+			returnMessage += "CFML:\n\tTag vs Script usage:\n\t\t%.2f" % (c*100/float(c+d)) +"% tags\n\t\t"+"%.2f" % (d*100/float(c+d)) +"% script\n"
 
 		#cfdumps and writeDumps
 		h = self.view.find_all("<cfdump[^>]*>", sublime.IGNORECASE) + self.view.find_all("writeDump\([^\;]*\;", sublime.IGNORECASE)
@@ -81,12 +133,12 @@ class cfsasCommand(sublime_plugin.TextCommand):
 		d.sort()
 
 		if len(d)>1:
-			m = str(len(d))+" cfdumps/writeDumps on lines "+str(d)
+			m = str(len(d))+" cfdumps/writeDumps on lines "+str(d)+"\n"
 		elif len(d) == 1:
-			m = "1 cfdump/writeDumps at line "+str(d[0])
+			m = "1 cfdump/writeDumps at line "+str(d[0])+"\n"
 		else:
-			m = "There are no cfdumps or writeDumps"
-		returnMessage += m
+			m = "There are no cfdumps or writeDumps\n"
+		returnMessage += "\t"+m
 		
 		#cfset validation				
 		returnMessage += "\n\nPossible Coding Standards Violations: \n=========================================================================================================\n"
