@@ -69,7 +69,8 @@ class cfsasCommand(sublime_plugin.TextCommand):
 		for region in h:
 			d += len(self.view.lines(region))
 		
-		returnMessage += "CFML: Tag vs Script usage\n\t%.2f" % (c*100/float(c+d)) +"% tags\n\t"+"%.2f" % (d*100/float(c+d)) +"% script\n"
+		if c>0 & d>0:
+			returnMessage += "CFML: Tag vs Script usage\n\t%.2f" % (c*100/float(c+d)) +"% tags\n\t"+"%.2f" % (d*100/float(c+d)) +"% script\n"
 
 		#cfdumps and writeDumps
 		h = self.view.find_all("<cfdump[^>]*>", sublime.IGNORECASE) + self.view.find_all("writeDump\([^\;]*\;", sublime.IGNORECASE)
@@ -81,7 +82,7 @@ class cfsasCommand(sublime_plugin.TextCommand):
 
 		if len(d)>1:
 			m = str(len(d))+" cfdumps/writeDumps on lines "+str(d)
-		elif lend(d) == 1:
+		elif len(d) == 1:
 			m = "1 cfdump/writeDumps at line "+str(d[0])
 		else:
 			m = "There are no cfdumps or writeDumps"
