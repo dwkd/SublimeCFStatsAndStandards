@@ -5,11 +5,13 @@ import re
 # 
 #   cfscript - match only cfscript - <cfscript>[\s\S]*?<\/cfscript>
 #   cfml - match all cf tags except cfscript <\/?cf(?!script)[^>]*># 
-#	 cfdump and writeDump - match all <cfdump[^>]*>   writeDump\([^\;]*\;
-#	 style <style[\s\S]*?<\/style> OR style="[^"]*" OR style='[^']*'
+#   cfdump and writeDump - match all <cfdump[^>]*>   writeDump\([^\;]*\;
+#   style <style[\s\S]*?<\/style> OR style="[^"]*" OR style='[^']*'
 #   in-file js = total script tags - src script tags => 
 #   		total script js blocks = <script[^\r\n]*?(">)[\s\S]*?<\/script> + <script>[\s\S]*?<\/script>
 #			src script js tags = <script[^>]*?src[^>]*?>(<\/script>)?
+#   cfaborts and cfscript aborts or aborts()- <cfabort[^>]*?> and abort(\([^\)\r\n]*?\))?;
+#
 # 
 #   cfset - leading hash - <cfset[\s]*#
 #   cfset - post equal leading hash - <cfset[^=\r\n]*=\s?#
@@ -135,11 +137,27 @@ class cfsasCommand(sublime_plugin.TextCommand):
 		if len(d)>1:
 			m = str(len(d))+" cfdumps/writeDumps on lines "+str(d)+"\n"
 		elif len(d) == 1:
-			m = "1 cfdump/writeDumps at line "+str(d[0])+"\n"
+			m = "1 cfdump/writeDump at line "+str(d[0])+"\n"
 		else:
 			m = "There are no cfdumps or writeDumps\n"
 		returnMessage += "\t"+m
 		
+		#cfaborts
+		h = self.view.find_all("<cfabort[^>]*?>", sublime.IGNORECASE) + self.view.find_all("abort(\([^\)\r\n]*?\))?;", sublime.IGNORECASE)
+		d = []
+		for region in h:
+			(row, col) = self.view.rowcol(region.begin())
+			d.append(row+1)
+		d.sort()
+		if len(d)>1:
+			m = str(len(d))+" cfaborts/aborts/aborts() on lines "+str(d)+"\n"
+		elif len(d) == 1:
+			m = "1 cfabort/abort/abort() at line "+str(d[0])+"\n"
+		else:
+			m = "There are no cfaborts, aborts or aborts()\n"
+		returnMessage += "\t"+m
+		
+
 		#cfset validation				
 		returnMessage += "\n\nPossible Coding Standards Violations: \n=========================================================================================================\n"
 		h = self.view.find_all("<cfset[\s]*#", sublime.IGNORECASE)
@@ -173,6 +191,25 @@ class cfsasCommand(sublime_plugin.TextCommand):
 			(row, col) = self.view.rowcol(region.begin())			
 			m = "Line "+str(row+1)+" - Issue: Shared memory variables should be modified inside an EXCLUSIVE CFLOCK of the same SCOPE. This ensures the integrity of shared data. - "+self.view.substr(self.view.line(region))+"\n"
 			returnMessage += m
+
+		#in-file css declarations
+		h = self.view.find_all("<style[\s\S]*?<\/style>", sublime.IGNORECASE)
+		for region in h:
+			(row,col) = self.view.rowcol(region.begin())
+			m = "Line "+str(row+1)+ " - Issue: In-file css declarations should be consolidated into a .css file. Otherwise it affects performance, page ranking and, let's face it, it's for noobs. - "+self.view.substr(self.view.line(region))+"\n"
+			returnMessage +=m
+
+		#in-file js function declarations
+		h = self.view.find_all("<script[^\r\n]*?(\">)[\s\S]*?<\/script>", sublime.IGNORECASE) + self.view.find_all("<script>[\s\S]*?<\/script>", sublime.IGNORECASE)
+		for region in h:
+			s = self.view.split_by_newlines(region)
+			r = re.compile("function[^\(\r\n]*\(", re.IGNORECASE)
+			for _region in s:				
+				t = r.search(self.view.substr(_region))
+				if t:
+					(row, col) = self.view.rowcol(_region.begin())
+					m = "Line "+str(row+1)+ " - Issue: In-file javascript function declarations should be consolidated into a .js file - "+self.view.substr(self.view.line(_region))+"\n"
+					returnMessage += m
 
 		#indentation validation
 		tags = ["cfapplication","cfcase","cfcatch","cfchart","cfchartseries","cfcomponent","cfdefaultcase","cfdocument","cfdocumentitem","cfdocumentsection","cfelse","cfelseif","cfform","cfformgroup","cffunction","cfgrid","cfif","cflock","cflogin","cfloop","cfmail","cfoutput","cfprocessingdirective","cfquery","cfsavecontent","cfscript","cfselect","cfsilent","cfstoredproc","cfswitch","cftable","cftextarea","cftransaction","cftree","cftry","cfxml"]

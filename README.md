@@ -7,7 +7,13 @@ The idea is to get a few useful stats about a cfm/cfc file and warn user of poss
 	<li>filename</li>
 	<li>filesize</li>
 	<li>comment size in kb and %</li>
-	<li>cfml tag vs script usage in %</li>
+	<li>javascript stat: number of external javascript files loaded</li>
+	<li>javascript stat: total size of all In-file javascript</li>
+	<li>css stat: total size of in-file css declarations</li>
+	<li>css stat: total size of in-line css (unlooped)</li>
+	<li>cfml stat: tag vs script usage in %</li>
+	<li>cfml stat: number of cfdumps/writeDumps</li>
+	<li>cfml stat: number of cfaborts/aborts/aborts()</li>
 	<li>number of cfdumps and writeDumps and at what line numbers</li>
 </ul>
 
@@ -17,6 +23,8 @@ The idea is to get a few useful stats about a cfm/cfc file and warn user of poss
 	<li>cfset unnecessary dummy variables used to perform operations that directly affect the data such as having &lt;cfset tempvar = ArrayAppend(myarray,"myvalue")&gt; unless the boolean return is useful</li>
 	<li>cfset modifying application, server or session shared variables outside of an exclusive cflock</li>
 	<li>proper indentation</li>
+	<li>in-file css declarations should be consolidated to .css file(s)</li>
+	<li>in-file js function declarations should be consolidated to .js file(s)</li>
 </ul>
 
 Work in progress. <br />
