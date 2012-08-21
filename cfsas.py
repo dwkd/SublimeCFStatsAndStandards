@@ -12,7 +12,10 @@ import re
 #			src script js tags = <script[^>]*?src[^>]*?>(<\/script>)?
 #   cfaborts and cfscript aborts or aborts()- <cfabort[^>]*?> and abort(\([^\)\r\n]*?\))?;
 #
-# 
+#   enfore cfqueryparam - all queries: <cfquery[\s\S]*?<\/cfquery> + \.setSQL\([^\)\r\n]*\); + execute regex
+#   		find nonparamed in execute and cfquery (?<!<cfqueryparam value\=)([\"\']?#form|[\"\']?#cgi|[\"\']?#url)\.
+#   		find nonparamed in setSQL \.setSQL\([^\)]*?(((form|url|cgi)\.)|\"[^\"]*?((form|url|cgi)\.))[^\)]*?\);         +         \.setSQL\([^\)]*?(((form|url|cgi)\.)|\'[^\']*?((form|url|cgi)\.))[^\)]*?\);
+#			find nonparamed in execute \.execute\([^\)]*?sql=\"[^\r\n]*?(#(form|cgi|url)\.)[^\)]*?\);
 #   cfset - leading hash - <cfset[\s]*#
 #   cfset - post equal leading hash - <cfset[^=\r\n]*=\s?#
 #   cfset - hash in a quote-free cfset - match # in <cfset[^>\"\r\n]*>
@@ -157,6 +160,7 @@ class cfsasCommand(sublime_plugin.TextCommand):
 			m = "There are no cfaborts, aborts or aborts()\n"
 		returnMessage += "\t"+m
 		
+		#cfqueryparam enforcement
 
 		#cfset validation				
 		returnMessage += "\n\nPossible Coding Standards Violations: \n=========================================================================================================\n"
