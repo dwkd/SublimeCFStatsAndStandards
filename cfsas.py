@@ -218,22 +218,25 @@ class cfsasCommand(sublime_plugin.TextCommand):
 		#indentation validation
 		tags = ["cfapplication","cfcase","cfcatch","cfchart","cfchartseries","cfcomponent","cfdefaultcase","cfdocument","cfdocumentitem","cfdocumentsection","cfelse","cfelseif","cfform","cfformgroup","cffunction","cfgrid","cfif","cflock","cflogin","cfloop","cfmail","cfoutput","cfprocessingdirective","cfquery","cfsavecontent","cfscript","cfselect","cfsilent","cfstoredproc","cfswitch","cftable","cftextarea","cftransaction","cftree","cftry","cfxml"]
 		for tag in tags:
-			h = self.view.find_all("[\t]*<"+tag+"[^\r\n]*[\r\n][^\r\n]*", sublime.IGNORECASE)
+			h = self.view.find_all("[\t]*<"+tag+"[ >][^\r\n]*[\r\n][^\r\n]*", sublime.IGNORECASE)
 			for region in h:				
 				s = self.view.split_by_newlines(region)
 				l = []
-				for _region in s:
-					g = re.split("<"+tag+"[^\r\n]*[\r\n]", self.view.substr(_region), re.IGNORECASE)
-					t = re.split("[^\t\s]+", self.view.substr(_region), re.IGNORECASE)
-					if len(l) == 0:
-						l.append(len([m.start() for m in re.finditer("\t", str(g[0]))]))
-					else:
-						l.append(len([m.start() for m in re.finditer("\t", str(t[0]))]))
-					if len(l) == 2:
-						if l[1] != (l[0]+1) or len([m.start() for m in re.finditer("[ ]", str(t[0]))]) > 0:
-							(row, col) = self.view.rowcol(region.begin())						
-							m = "Line "+str(row+2)+" - Issue: Missing or invalid indentation after the tag "+tag+". The indentation should be one <tab> more than the preceding <"+tag+"> and should not contain 'space' characters but <tab(s)> only. - \n"+self.view.substr(self.view.line(region))+"\n"
-							returnMessage += m						
+				ti = len([m.start() for m in re.finditer("<"+tag+"[ >]", self.view.substr(s[0]), re.IGNORECASE)])
+				cti = len([m.start() for m in re.finditer("<\/"+tag+">", self.view.substr(s[0]), re.IGNORECASE)])
+				if (ti > cti and tag != "cfelse") or (tag == "cfelse" and len([m.start() for m in re.finditer("<cfif[ >]", self.view.substr(s[0]), re.IGNORECASE)]) > len([m.start() for m in re.finditer("<\/cfif>", self.view.substr(s[0]), re.IGNORECASE)])):
+					for _region in s:				
+						g = re.split("<"+tag+".*$", self.view.substr(_region), re.IGNORECASE)
+						t = re.split("[^\t\s]+", self.view.substr(_region), re.IGNORECASE)
+						if len(l) == 0:
+							l.append(len([m.start() for m in re.finditer("\t", str(g[0]))]))
+						else:
+							l.append(len([m.start() for m in re.finditer("\t", str(t[0]))]))
+						if len(l) == 2:
+							if l[1] != (l[0]+1) or len([m.start() for m in re.finditer("[ ]", str(t[0]))]) > 0:
+								(row, col) = self.view.rowcol(region.begin())						
+								m = "Line "+str(row+2)+" - Issue: Missing or invalid indentation after the tag "+tag+". The indentation should be one <tab> more than the preceding <"+tag+"> and should not contain 'space' characters but <tab(s)> only. - \n"+self.view.substr(self.view.line(region))+"\n"
+								returnMessage += m
 
 		#send to new file
 		w = self.view.window()
