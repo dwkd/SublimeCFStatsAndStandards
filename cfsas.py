@@ -13,7 +13,7 @@ import re
 #   cfaborts and cfscript aborts or aborts()- <cfabort[^>]*?> and abort(\([^\)\r\n]*?\))?;
 #
 #   enfore cfqueryparam - all queries: <cfquery[\s\S]*?<\/cfquery> + \.setSQL\([^\)\r\n]*\); + execute regex
-#   		find nonparamed in execute and cfquery (?<!<cfqueryparam value\=)([\"\']?#form|[\"\']?#cgi|[\"\']?#url)\.
+#   		find nonparamed in cfquery (?<!value=[\"\'])((#form)|#cgi|#url)  minus those used in tags (?<!value=[\"\'])((#form)|#cgi|#url)[^\r\n>]*?>
 #   		find nonparamed in setSQL \.setSQL\([^\)]*?(((form|url|cgi)\.)|\"[^\"]*?((form|url|cgi)\.))[^\)]*?\);         +         \.setSQL\([^\)]*?(((form|url|cgi)\.)|\'[^\']*?((form|url|cgi)\.))[^\)]*?\);
 #			find nonparamed in execute \.execute\([^\)]*?sql=\"[^\r\n]*?(#(form|cgi|url)\.)[^\)]*?\);
 #   cfset - leading hash - <cfset[\s]*#
@@ -159,11 +159,25 @@ class cfsasCommand(sublime_plugin.TextCommand):
 		else:
 			m = "There are no cfaborts, aborts or aborts()\n"
 		returnMessage += "\t"+m
+
+		#begin coding standards check
+		returnMessage += "\n\nPossible Coding Standards Violations: \n=========================================================================================================\n"
 		
 		#cfqueryparam enforcement
+		h = self.view.find_all("<cfquery[\s\S]*?<\/cfquery>", sublime.IGNORECASE)
+		for region in h:
+			s = self.view.split_by_newlines(region)
+			r = re.compile("(?<!value=[\"\'])((#form)|#cgi|#url)", re.IGNORECASE)
+			r2 = re.compile("(?<!value=[\"\'])((#form)|#cgi|#url)[^\r\n>]*?>", re.IGNORECASE)
+			for _region in s:				
+				t = r.search(self.view.substr(_region))
+				t2 = r2.search(self.view.substr(_region))
+				if t and not t2:
+					(row, col) = self.view.rowcol(_region.begin())
+					m = "Line "+str(row+1)+ " - Issue: Possible Security Hole - SQL Injection - All query parameters should be binded accordingly using \"cfqueryparam\"  - "+self.view.substr(self.view.line(_region))+"\n"
+					returnMessage += m
 
-		#cfset validation				
-		returnMessage += "\n\nPossible Coding Standards Violations: \n=========================================================================================================\n"
+		#cfset validation						
 		h = self.view.find_all("<cfset[\s]*#", sublime.IGNORECASE)
 		for region in h:
 			(row, col) = self.view.rowcol(region.begin())
