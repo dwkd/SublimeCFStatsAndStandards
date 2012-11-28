@@ -167,8 +167,8 @@ class cfsasCommand(sublime_plugin.TextCommand):
 		h = self.view.find_all("<cfquery[\s\S]*?<\/cfquery>", sublime.IGNORECASE)
 		for region in h:
 			s = self.view.split_by_newlines(region)
-			r = re.compile("(?<!value=[\"\'])((#form)|#cgi|#url)", re.IGNORECASE)
-			r2 = re.compile("(?<!value=[\"\'])((#form)|#cgi|#url)[^\r\n>]*?>", re.IGNORECASE)
+			r = re.compile("(?<!value=[\"\'])((#form)|#cgi|#url|#arguments)", re.IGNORECASE)
+			r2 = re.compile("(?<!value=[\"\'])((#form)|#cgi|#url|#arguments)[^\r\n>]*?>", re.IGNORECASE)
 			for _region in s:				
 				t = r.search(self.view.substr(_region))
 				t2 = r2.search(self.view.substr(_region))
