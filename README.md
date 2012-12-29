@@ -32,6 +32,16 @@ Work in progress. <br />
 More standards to come. <br />
 If you'd like to see another stat or standard, shoot me an email at webmaster@thebluepipe.com<br />
 
+Installing
+============
+1. Download the project from github. (Press the Zip button.)
+2. Open the downloaded zip file.
+3. Select and copy the folder dwkd-SublimeCFStatsAndStandards....
+4. Open Sublime Text Editor
+5. Under the Preferences menu, press Browse Packages....
+6. Paste the folder dwkd-SublimeCFStatsAndStandards... to the Packages directory.
+7. Restart Sublime
+
 How-to
 ======
 Open file to be inspected and press:<br />
